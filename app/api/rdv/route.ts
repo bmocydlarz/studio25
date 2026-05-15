@@ -6,10 +6,7 @@ import { cookies } from 'next/headers'
 import { sessionOptions } from '@/lib/iron-session'
 
 export async function GET(request: NextRequest) {
-  // On récupère la session
   const session = await getIronSession(cookies(), sessionOptions)
-  
-  // Assertion de type "any" pour contourner la restriction stricte de TS sur isAdmin
   const isAdmin = (session as any).isAdmin;
 
   if (!isAdmin) {
@@ -39,30 +36,33 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { prenom, nom, phone, service_id, date, time, service_nom, categorie, prix, duree } = body
+    console.log("Données reçues pour insertion:", body)
 
-    const { error } = await supabase
+    const { prenom, nom, phone, service_id, date, time } = body
+
+    // On n'insère que les colonnes indispensables pour éviter les erreurs de schéma
+    const { data, error } = await supabase
       .from('reservations')
       .insert([
         {
-          prenom,
-          nom,
-          phone,
-          service_id,
-          date,
+          prenom: prenom,
+          nom: nom,
+          phone: phone,
+          service_id: service_id,
+          date: date,
           time_start: time,
-          service_nom,
-          categorie,
-          prix,
-          duree,
           slots_occupes: [time] 
         }
       ])
 
-    if (error) throw error
+    if (error) {
+      console.error("Erreur Supabase détaillée:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
+    console.error("Erreur Catch API:", err.message)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
