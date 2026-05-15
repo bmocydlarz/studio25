@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studiio.25 | Beauté & Confiance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- PALETTE DE COULEURS ORGANIQUES --- */
+        :root {
+            --bg-color: #FDFBF7;
+            --text-color: #2C2C2C;
+            --terracotta: #C8795A;
+            --terracotta-light: rgba(200, 121, 90, 0.15);
+            --blue-grey: #8B9A9D;
+            --sand: #D9C5B2;
+            --sand-light: #F4EEE6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        h1, h2, h3, h4, .serif {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+        }
+
+        /* --- ARRIÈRE-PLAN ANIMÉ (BLOBS) --- */
+        .bg-blobs {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 15s infinite alternate ease-in-out;
+        }
+        .blob.terracotta { background: var(--terracotta); width: 400px; height: 400px; top: -100px; left: -100px; }
+        .blob.sand { background: var(--sand); width: 500px; height: 500px; bottom: -150px; right: -100px; animation-delay: -5s; }
+        .blob.blue { background: var(--blue-grey); width: 350px; height: 350px; top: 40%; left: 20%; animation-duration: 20s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        /* --- EFFET GLASSMORPHISM --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(139, 154, 157, 0.15);
+        }
+
+        /* Navbar */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            /* position: sticky retiré pour ne plus suivre le scroll */
+            margin: 20px 20px 0 20px; /* Espace en haut et sur les côtés */
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--terracotta); }
+
+        .btn-reserver {
+            background-color: var(--terracotta);
+            color: white !important;
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px var(--terracotta-light);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        /* Header / Hero */
+        header {
+            text-align: center;
+            padding: 6rem 2rem 5rem; /* Ajusté car le menu n'est plus sticky */
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        header h1 span { color: var(--terracotta); font-style: italic; }
+
+        header p {
+            font-size: 1.2rem;
+            color: #555;
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .info-badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Sections */
+        section {
+            padding: 5rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s forwards;
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            color: var(--blue-grey);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        /* Instagram/Créations */
+        .ig-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+
+        .ig-embed-container {
+            width: 100%;
+            max-width: 350px;
+            display: flex;          /* NOUVEAU : Transforme la carte en zone flexible */
+            flex-direction: column; /* NOUVEAU */
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+
+        /* NOUVEAU : Force le lien ou la vidéo à s'étirer jusqu'en bas */
+        .ig-embed-container > a, 
+        .ig-embed-container > video {
+            flex-grow: 1; 
+            display: block;
+        }
+
+        .ig-embed-container:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Tarifs */
+        .tarifs-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .tarif-card {
+            padding: 3rem 2.5rem;
+            transition: transform 0.4s ease;
+        }
+
+        .tarif-card h3 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--terracotta);
+            text-align: center;
+        }
+
+        .tarif-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .tarif-item .dots {
+            flex-grow: 1;
+            border-bottom: 2px dotted var(--sand);
+            margin: 0 15px;
+            position: relative;
+            top: -6px;
+            opacity: 0.6;
+        }
+
+        .tarif-sub {
+            font-size: 0.85rem;
+            color: var(--blue-grey);
+            margin-top: -8px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            font-style: italic;
+        }
+
+        /* Reservation */
+        .booking-form {
+            padding: 4rem;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .step-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--terracotta);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .step-title span {
+            background: var(--sand-light);
+            color: var(--terracotta);
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: bold;
+        }
+
+        .booking-step {
+            margin-bottom: 3rem;
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .choice-card {
+            background: rgba(255,255,255,0.8);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .choice-card.selected {
+            background: var(--terracotta);
+            border-color: var(--terracotta);
+            color: white;
+            box-shadow: 0 10px 25px var(--terracotta-light);
+        }
+
+        .choice-card .title { font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 18px;
+            border: 2px solid var(--sand-light);
+            border-radius: 16px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        input[type="date"]:focus { outline: none; border-color: var(--terracotta); }
+
+        .slots-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .slot {
+            padding: 12px 5px;
+            text-align: center;
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .slot.selected {
+            background: var(--terracotta);
+            color: white;
+        }
+
+        .slot.booked {
+            background: transparent;
+            color: #ccc;
+            border: 2px dashed #ddd;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 20px;
+            background-color: var(--text-color);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button[type="submit"]:disabled {
+            background-color: var(--sand);
+            cursor: not-allowed;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 5%;
+            margin-top: 5rem;
+            border-top: 1px solid var(--sand-light);
+        }
+
+        /* =========================================================
+           RÈGLES RESPONSIVES POUR MOBILES & TABLETTES
+           ========================================================= */
+        @media screen and (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 15px;
+                border-radius: 20px;
+                margin: 15px 15px 0 15px; /* Ajustement marge mobile */
+            }
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            header {
+                padding: 4rem 1rem 3rem;
+            }
+            header h1 {
+                font-size: 2.5rem;
+            }
+            header p {
+                font-size: 1rem;
+            }
+            section {
+                padding: 3rem 1rem;
+            }
+            .section-title {
+                font-size: 2rem;
+            }
+            .section-subtitle {
+                font-size: 0.95rem;
+                margin-bottom: 2rem;
+            }
+            .booking-form, .tarif-card {
+                padding: 2rem 1.5rem; 
+            }
+            .step-title {
+                font-size: 1.2rem;
+            }
+            .choice-grid {
+                grid-template-columns: 1fr;
+            }
+            .slots-container {
+                grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+            }
+            input[type="date"], button[type="submit"] {
+                padding: 15px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blobs">
+        <div class="blob terracotta"></div>
+        <div class="blob sand"></div>
+        <div class="blob blue"></div>
+    </div>
+
+    <nav class="glass-card" style="border-radius: 50px;">
+        <a href="#" class="logo serif">Studiio.25</a>
+        <div class="nav-links">
+            <a href="#instagram">Créations</a>
+            <a href="#tarifs">Tarifs</a>
+            <a href="#reservation" class="btn-reserver">Réserver</a>
+        </div>
+    </nav>
+
+    <header>
+        <h1>Beauté & <span>confiance en toi</span></h1>
+        <p>Expertise Coiffure, Onglerie et Regard. Un moment pour soi, par une professionnelle diplômée et certifiée.</p>
+        <div class="info-badges">
+            <span class="badge">📍 Quesnoy-sur-Deûle</span>
+            <span class="badge">🏡 Sur place/domicile (20km)</span>
+            <span class="badge">📞 07.60.46.27.31</span>
+        </div>
+    </header>
+
+    <section id="instagram">
+        <h2 class="section-title">Mon Univers</h2>
+        <p class="section-subtitle">Découvre mes dernières créations ✨</p>
+        
+        <div class="ig-grid">
+            <div class="ig-embed-container">
+                <iframe src="https://www.instagram.com/p/DHrH71SMkTm/embed" width="100%" height="450" frameborder="0" scrolling="no" allowtransparency="true"></iframe>
+            </div>
+            <div class="ig-embed-container">
+                <iframe src="https://www.instagram.com/p/DWhFvJ9iMpk/embed" width="100%" height="450" frameborder="0" scrolling="no" allowtransparency="true"></iframe>
+            </div>
+            <div class="ig-embed-container">
+                <iframe src="https://www.instagram.com/p/DUtPGm2iJPT/embed/" width="100%" height="450" frameborder="0" scrolling="no" allowtransparency="true"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <section id="tarifs">
+        <h2 class="section-title">La Carte des Soins</h2>
+        <p class="section-subtitle">Des prestations sur-mesure pour sublimer ton naturel 🤎</p>
+        
+        <div class="tarifs-container">
+            <div class="tarif-card glass-card">
+                <h3>Onglerie</h3>
+                <div class="tarif-item"><span>Manucure</span><div class="dots"></div><span>20€</span></div>
+                <div class="tarif-item"><span>Semi Permanent</span><div class="dots"></div><span>25€</span></div>
+                <div class="tarif-item"><span>Gainage/Renfort</span><div class="dots"></div><span>30€</span></div>
+                <div class="tarif-item"><span>Gel-X</span><div class="dots"></div><span>40€</span></div>
+                <div class="tarif-item"><span>Capsule Gel</span><div class="dots"></div><span>45€</span></div>
+                <div class="tarif-sub">Remplissage 3/4 semaines : 35€</div>
+                <div class="tarif-sub">Remplissage 5 semaines : 40€</div>
+            </div>
+
+            <div class="tarif-card glass-card">
+                <h3>Cils</h3>
+                <div class="tarif-item"><span>Réhaussement Cils</span><div class="dots"></div><span>30€</span></div>
+                <div class="tarif-item"><span>Cils à cils</span><div class="dots"></div><span>40€</span></div>
+                <div class="tarif-item"><span>Mixte léger</span><div class="dots"></div><span>45€</span></div>
+                <div class="tarif-item"><span>Mixte Intense</span><div class="dots"></div><span>50€</span></div>
+                <div class="tarif-item"><span>Volume Russe</span><div class="dots"></div><span>55€</span></div>
+            </div>
+
+            <div class="tarif-card glass-card">
+                <h3>Coiffure</h3>
+                <div class="tarif-item"><span>Coupe brushing</span><div class="dots"></div><span>30€</span></div>
+                <div class="tarif-item"><span>Brushing</span><div class="dots"></div><span>20€</span></div>
+                <div class="tarif-item"><span>Balayage*</span><div class="dots"></div><span>Dès 75€</span></div>
+                <div class="tarif-item"><span>Couleur*</span><div class="dots"></div><span>Dès 60€</span></div>
+                <div class="tarif-sub">*Forfaits avec shampoing/brushing/soin</div>
+                <br>
+                <div class="tarif-item"><span>Coupe Homme</span><div class="dots"></div><span>18€</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="reservation">
+        <h2 class="section-title">Prendre Rendez-vous</h2>
+        <p class="section-subtitle">Sélectionne ta prestation pour voir les disponibilités.</p>
+        
+        <div class="booking-form glass-card">
+            <form id="rdvForm">
+                <div class="booking-step">
+                    <div class="step-title"><span>1</span> L'Univers</div>
+                    <div class="choice-grid" id="category-grid">
+                        <div class="choice-card" data-cat="onglerie"><div class="title">💅 Onglerie</div></div>
+                        <div class="choice-card" data-cat="cils"><div class="title">👁️ Cils</div></div>
+                        <div class="choice-card" data-cat="coiffure"><div class="title">✂️ Coiffure</div></div>
+                    </div>
+                </div>
+
+                <div class="booking-step" id="step-service" style="display: none;">
+                    <div class="step-title"><span>2</span> La Prestation</div>
+                    <div class="choice-grid" id="service-grid"></div>
+                </div>
+
+                <div class="booking-step" id="step-datetime" style="display: none;">
+                    <div class="step-title"><span>3</span> Le Moment Parfait</div>
+                    <input type="date" id="date" required>
+                    <div id="slots-group" style="display: none; margin-top: 25px;">
+                        <div class="slots-container" id="slots-container"></div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="selected-category">
+                <input type="hidden" id="selected-service">
+                <input type="hidden" id="selected-time">
+
+                <button type="submit" id="submit-btn" disabled>Confirmer mon rendez-vous</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <p>Studiio.25 🤎</p>
+    </footer>
+
+    <script>
+        // Animations Scroll
+        document.addEventListener("DOMContentLoaded", () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.style.animation = `fadeUp 1s forwards`;
+                });
+            });
+            document.querySelectorAll('section').forEach(sec => {
+                sec.style.opacity = "0";
+                observer.observe(sec);
+            });
+        });
+
+        // Logique de Réservation
+        const prestations = {
+            onglerie: [{id:'manucure', name:'Manucure', duration:45}, {id:'semi', name:'Semi Permanent', duration:60}, {id:'capsule', name:'Capsule Gel', duration:120}, {id:'gelx', name:'Gel-X', duration:105}],
+            cils: [{id:'cilacil', name:'Cils à cils', duration:90}, {id:'mixtei', name:'Mixte Intense', duration:120}, {id:'volume', name:'Volume Russe', duration:150}, {id:'rehaussement', name:'Réhaussement', duration:60}],
+            coiffure: [{id:'coupe_f', name:'Coupe brushing', duration:60}, {id:'balayage', name:'Balayage + Soin', duration:180}, {id:'coupe_h', name:'Coupe Homme', duration:30}]
+        };
+
+        const bookedSlotsDatabase = {"2026-05-18": ["09:00", "09:30", "10:00", "10:30"], "2026-05-13": ["09:00", "09:30", "10:00"]};
+        let currentDuration = 0;
+        
+        const dateInput = document.getElementById('date');
+        dateInput.min = new Date().toISOString().split('T')[0];
+
+        document.querySelectorAll('#category-grid .choice-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('#category-grid .choice-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('step-service').style.display = 'block';
+                populateServices(this.getAttribute('data-cat'));
+                resetStep3();
+            });
+        });
+
+        function populateServices(cat) {
+            const grid = document.getElementById('service-grid');
+            grid.innerHTML = ''; 
+            prestations[cat].forEach(serv => {
+                const card = document.createElement('div');
+                card.className = 'choice-card';
+                card.innerHTML = `<div class="title">${serv.name}</div><div class="duration" style="font-size:0.9rem;opacity:0.8;">⏱ ${serv.duration} min</div>`;
+                card.onclick = () => {
+                    document.querySelectorAll('#service-grid .choice-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    document.getElementById('selected-service').value = serv.id;
+                    currentDuration = serv.duration;
+                    document.getElementById('step-datetime').style.display = 'block';
+                    if(dateInput.value) generateSlots(dateInput.value, currentDuration);
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        dateInput.onchange = () => generateSlots(dateInput.value, currentDuration);
+
+        function resetStep3() {
+            document.getElementById('step-datetime').style.display = 'none';
+            document.getElementById('selected-time').value = '';
+            dateInput.value = '';
+            document.getElementById('slots-group').style.display = 'none';
+            document.getElementById('submit-btn').disabled = true;
+        }
+
+        function generateSlots(date, duration) {
+            const container = document.getElementById('slots-container');
+            container.innerHTML = '';
+            document.getElementById('slots-group').style.display = 'block';
+            document.getElementById('submit-btn').disabled = true;
+
+            const blocks = Math.ceil(duration / 30);
+            const booked = bookedSlotsDatabase[date] || [];
+            let all = [];
+            for(let h=9; h<18; h++) { all.push(`${String(h).padStart(2,'0')}:00`); all.push(`${String(h).padStart(2,'0')}:30`); }
+
+            all.forEach((time, i) => {
+                const div = document.createElement('div');
+                div.className = 'slot';
+                div.textContent = time;
+
+                let avail = (i + blocks <= all.length);
+                if(avail) { for(let b=0; b<blocks; b++) if(booked.includes(all[i+b])) avail = false; }
+
+                if(!avail) div.classList.add('booked');
+                else {
+                    div.onclick = () => {
+                        document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+                        div.classList.add('selected');
+                        document.getElementById('selected-time').value = time;
+                        document.getElementById('submit-btn').disabled = false;
+                    };
+                }
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('rdvForm').onsubmit = (e) => {
+            e.preventDefault();
+            alert(`Succès ! Créneau réservé le ${dateInput.value} à ${document.getElementById('selected-time').value}.`);
+        };
+    </script>
+</body>
+</html>
