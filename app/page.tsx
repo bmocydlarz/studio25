@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { PRESTATIONS_PAR_CAT, getPrestationById, Categorie } from '@/lib/prestations'
 
-// Définition du type pour TypeScript pour éviter l'erreur de build
 interface Slot {
   time: string;
   isAvailable: boolean;
@@ -20,12 +19,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  // Calcule la durée actuelle
-  const currentDuration = serviceId ? getPrestationById(serviceId)?.duree || 0 : 0
+  const currentService = serviceId ? getPrestationById(serviceId) : null
+  const currentDuration = currentService?.duree || 0
 
-  // Génération des créneaux de 9h à 18h
   const generateSlots = () => {
-    const slots: Slot[] = [] // Type explicite pour le build
+    const slots: Slot[] = []
     const blocksNeeded = Math.ceil(currentDuration / 30)
     const allTimes: string[] = []
     
@@ -36,11 +34,9 @@ export default function Home() {
 
     allTimes.forEach((t, i) => {
       let isAvailable = (i + blocksNeeded <= allTimes.length)
-      
       if (isAvailable) {
         for (let b = 0; b < blocksNeeded; b++) {
-          const slotToCheck = allTimes[i + b]
-          if (bookedSlots.includes(slotToCheck)) {
+          if (bookedSlots.includes(allTimes[i + b])) {
             isAvailable = false
             break
           }
@@ -51,16 +47,12 @@ export default function Home() {
     return slots
   }
 
-  // Récupérer les créneaux bloqués quand la date change
   useEffect(() => {
     if (!date) return
     setTime('')
-    
     fetch(`/api/rdv/slots/${date}`)
       .then(res => res.json())
-      .then(data => {
-        setBookedSlots(data.booked || [])
-      })
+      .then(data => setBookedSlots(data.booked || []))
       .catch(console.error)
   }, [date])
 
@@ -68,25 +60,35 @@ export default function Home() {
     e.preventDefault()
     setLoading(true)
 
+    // On envoie TOUTES les infos pour satisfaire les contraintes Not Null de Supabase
+    const payload = {
+      ...formData,
+      service_id: serviceId,
+      date,
+      time,
+      service_nom: currentService?.nom,
+      categorie: categorie,
+      prix: currentService?.prix,
+      duree: currentService?.duree
+    }
+
     try {
       const res = await fetch('/api/rdv', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, service_id: serviceId, date, time })
+        body: JSON.stringify(payload)
       })
-
-      const result = await res.json()
 
       if (res.ok) {
         setSuccess(true)
         setFormData({ prenom: '', nom: '', phone: '' })
         setCategorie(null); setServiceId(''); setDate(''); setTime('');
       } else {
-        // ICI : On affiche l'erreur réelle renvoyée par Supabase
-        alert(`ERREUR : ${result.error} \nDétails: ${result.details || 'Aucun'} \nIndice: ${result.hint || 'Aucun'}`)
+        const errorData = await res.json()
+        alert(`Erreur : ${errorData.error}`)
       }
     } catch (err) {
-      alert("Impossible de contacter le serveur.")
+      alert("Erreur de connexion au serveur.")
     } finally {
       setLoading(false)
     }
@@ -131,81 +133,17 @@ export default function Home() {
         </div>
       </header>
 
-      <section id="instagram">
-          <div className="section-label">Portfolio</div>
-          <h2 className="section-title">Mon Univers</h2>
-          <p className="section-sub">Découvre mes dernières créations ✨</p>
-          <div className="ig-grid">
-              <div className="ig-card"><iframe src="https://www.instagram.com/p/DHrH71SMkTm/embed" height="450" frameBorder="0" scrolling="no"></iframe></div>
-              <div className="ig-card"><iframe src="https://www.instagram.com/p/DWhFvJ9iMpk/embed" height="450" frameBorder="0" scrolling="no"></iframe></div>
-              <div className="ig-card"><iframe src="https://www.instagram.com/p/DUtPGm2iJPT/embed/" height="450" frameBorder="0" scrolling="no"></iframe></div>
-          </div>
-      </section>
-
-      <section id="tarifs">
-          <div className="section-label">Prestations</div>
-          <h2 className="section-title">La Carte des Soins</h2>
-          <div className="tarifs-grid">
-              <div className="tarif-card glass">
-                  <div className="tarif-head">
-                      <div className="tarif-icon">💅</div>
-                      <h3>Onglerie</h3>
-                  </div>
-                  <div className="tarif-item"><span className="name">Manucure</span><span className="price">20 €</span></div>
-                  <div className="tarif-item"><span className="name">Semi Permanent</span><span className="price">25 €</span></div>
-                  <div className="tarif-item"><span className="name">Gainage / Renfort</span><span className="price">30 €</span></div>
-                  <div className="tarif-item"><span className="name">Gel-X</span><span className="price">40 €</span></div>
-                  <div className="tarif-item"><span className="name">Capsule Gel</span><span className="price">45 €</span></div>
-              </div>
-              
-              <div className="tarif-card glass">
-                  <div className="tarif-head">
-                      <div className="tarif-icon">👁️</div>
-                      <h3>Cils</h3>
-                  </div>
-                  <div className="tarif-item"><span className="name">Réhaussement Cils</span><span className="price">30 €</span></div>
-                  <div className="tarif-item"><span className="name">Cils à cils</span><span className="price">40 €</span></div>
-                  <div className="tarif-item"><span className="name">Mixte léger</span><span className="price">45 €</span></div>
-                  <div className="tarif-item"><span className="name">Mixte Intense</span><span className="price">50 €</span></div>
-                  <div className="tarif-item"><span className="name">Volume Russe</span><span className="price">55 €</span></div>
-              </div>
-              
-              <div className="tarif-card glass">
-                  <div className="tarif-head">
-                      <div className="tarif-icon">✂️</div>
-                      <h3>Coiffure</h3>
-                  </div>
-                  <div className="tarif-item"><span className="name">Coupe brushing</span><span className="price">30 €</span></div>
-                  <div className="tarif-item"><span className="name">Brushing</span><span className="price">20 €</span></div>
-                  <div className="tarif-item"><span className="name">Balayage*</span><span className="price">dès 75 €</span></div>
-                  <div className="tarif-item"><span className="name">Couleur*</span><span className="price">dès 60 €</span></div>
-                  <div className="tarif-item" style={{marginTop:'10px'}}><span className="name">Coupe Homme</span><span className="price">18 €</span></div>
-              </div>
-          </div>
-      </section>
-
       <section id="reservation">
         <div className="section-label">Agenda</div>
         <h2 className="section-title">Prendre Rendez-vous</h2>
-        
         <div className="booking-wrap glass">
-          <form onSubmit={handleSubmit} noValidate>
-            
+          <form onSubmit={handleSubmit}>
             <div className="booking-step">
               <div className="step-head"><div className="step-num">1</div> Tes coordonnées</div>
               <div className="client-fields">
-                <div className="field-group">
-                  <label>Prénom *</label>
-                  <input type="text" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} required />
-                </div>
-                <div className="field-group">
-                  <label>Nom *</label>
-                  <input type="text" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required />
-                </div>
-                <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                  <label>Téléphone *</label>
-                  <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required />
-                </div>
+                <div className="field-group"><label>Prénom</label><input type="text" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} required /></div>
+                <div className="field-group"><label>Nom</label><input type="text" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required /></div>
+                <div className="field-group" style={{ gridColumn: '1 / -1' }}><label>Téléphone</label><input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required /></div>
               </div>
             </div>
 
@@ -237,21 +175,12 @@ export default function Home() {
             {serviceId && (
               <div className="booking-step">
                 <div className="step-head"><div className="step-num">4</div> Le Moment Parfait</div>
-                <div style={{ width: '100%' }}>
-                  <input type="date" value={date} min={new Date().toISOString().split('T')[0]} onChange={e => setDate(e.target.value)} required />
-                </div>
-                
+                <input type="date" value={date} min={new Date().toISOString().split('T')[0]} onChange={e => setDate(e.target.value)} required />
                 {date && (
                   <div className="slots-wrap">
                     <div className="slots-grid">
                       {generateSlots().map(slot => (
-                        <div 
-                          key={slot.time} 
-                          className={`slot ${!slot.isAvailable ? 'booked' : ''} ${time === slot.time ? 'selected' : ''}`}
-                          onClick={() => slot.isAvailable && setTime(slot.time)}
-                        >
-                          {slot.time}
-                        </div>
+                        <div key={slot.time} className={`slot ${!slot.isAvailable ? 'booked' : ''} ${time === slot.time ? 'selected' : ''}`} onClick={() => slot.isAvailable && setTime(slot.time)}>{slot.time}</div>
                       ))}
                     </div>
                   </div>
@@ -261,16 +190,13 @@ export default function Home() {
 
             <button type="submit" className={`btn-submit ${loading ? 'loading' : ''}`} disabled={!isFormValid || loading}>
               <span className="btn-text">Confirmer mon rendez-vous</span>
-              <span className="btn-loader">⏳ Envoi en cours…</span>
+              <span className="btn-loader">Envoi en cours…</span>
             </button>
-
           </form>
         </div>
       </section>
 
-      <footer>
-          <p>Studiio.25 🤎 · Quesnoy-sur-Deûle</p>
-      </footer>
+      <footer><p>Studiio.25 🤎 · Quesnoy-sur-Deûle</p></footer>
     </>
   )
 }
