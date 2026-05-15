@@ -128,33 +128,55 @@ export default function Home() {
 
       <section id="instagram">
         <div className="section-label">Portfolio</div>
-        <h2 className="section-title">Mes dernières <em>créations</em></h2>
-        <div className="insta-grid">
-            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1607779097040-26e80aa78e66?q=80&w=800" alt="Ongles" /></div>
-            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=800" alt="Coiffure" /></div>
-            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=800" alt="Cils" /></div>
-            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800" alt="Maquillage" /></div>
+        <h2 className="section-title">Mon <em>Univers</em></h2>
+        <p className="section-sub">Découvre mes dernières créations ✨</p>
+        <div className="ig-grid">
+            <div className="ig-card"><iframe src="https://www.instagram.com/p/DHrH71SMkTm/embed" height="450" frameBorder="0" scrolling="no"></iframe></div>
+            <div className="ig-card"><iframe src="https://www.instagram.com/p/DWhFvJ9iMpk/embed" height="450" frameBorder="0" scrolling="no"></iframe></div>
+            <div className="ig-card"><iframe src="https://www.instagram.com/p/DUtPGm2iJPT/embed/" height="450" frameBorder="0" scrolling="no"></iframe></div>
         </div>
       </section>
 
       <section id="tarifs">
-        <div className="section-label">Menu</div>
-        <h2 className="section-title">Prestations & <em>Tarifs</em></h2>
+        <div className="section-label">Prestations</div>
+        <h2 className="section-title">La Carte des <em>Soins</em></h2>
+        <p className="section-sub">Des prestations sur-mesure pour sublimer ton naturel 🤎</p>
         <div className="tarifs-grid">
-          {Object.entries(PRESTATIONS_PAR_CAT).map(([cat, services]) => (
-            <div key={cat} className="tarif-category glass">
-              <h3 className="serif" style={{textTransform: 'capitalize'}}>{cat}</h3>
-              <div className="tarif-list">
-                {services.map(s => (
-                  <div key={s.id} className="tarif-item">
-                    <span className="name">{s.nom}</span>
-                    <span className="dots"></span>
-                    <span className="price">{s.prix}€</span>
-                  </div>
-                ))}
-              </div>
+            <div className="tarif-card glass">
+                <div className="tarif-head">
+                    <div className="tarif-icon">💅</div>
+                    <h3>Onglerie</h3>
+                </div>
+                <div className="tarif-item"><span className="name">Manucure</span><span className="price">20 €</span></div>
+                <div className="tarif-item"><span className="name">Semi Permanent</span><span className="price">25 €</span></div>
+                <div className="tarif-item"><span className="name">Gainage / Renfort</span><span className="price">30 €</span></div>
+                <div className="tarif-item"><span className="name">Gel-X</span><span className="price">40 €</span></div>
+                <div className="tarif-item"><span className="name">Capsule Gel</span><span className="price">45 €</span></div>
             </div>
-          ))}
+            
+            <div className="tarif-card glass">
+                <div className="tarif-head">
+                    <div className="tarif-icon">👁️</div>
+                    <h3>Cils</h3>
+                </div>
+                <div className="tarif-item"><span className="name">Réhaussement Cils</span><span className="price">30 €</span></div>
+                <div className="tarif-item"><span className="name">Cils à cils</span><span className="price">40 €</span></div>
+                <div className="tarif-item"><span className="name">Mixte léger</span><span className="price">45 €</span></div>
+                <div className="tarif-item"><span className="name">Mixte Intense</span><span className="price">50 €</span></div>
+                <div className="tarif-item"><span className="name">Volume Russe</span><span className="price">55 €</span></div>
+            </div>
+            
+            <div className="tarif-card glass">
+                <div className="tarif-head">
+                    <div className="tarif-icon">✂️</div>
+                    <h3>Coiffure</h3>
+                </div>
+                <div className="tarif-item"><span className="name">Coupe brushing</span><span className="price">30 €</span></div>
+                <div className="tarif-item"><span className="name">Brushing</span><span className="price">20 €</span></div>
+                <div className="tarif-item"><span className="name">Balayage*</span><span className="price">dès 75 €</span></div>
+                <div className="tarif-item"><span className="name">Couleur*</span><span className="price">dès 60 €</span></div>
+                <div className="tarif-item" style={{marginTop:'10px'}}><span className="name">Coupe Homme</span><span className="price">18 €</span></div>
+            </div>
         </div>
       </section>
 
@@ -223,7 +245,6 @@ export default function Home() {
 
       <footer>
         <p>Studiio.25 🤎 · Quesnoy-sur-Deûle</p>
-        <p style={{fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.6}}>© 2026 Tous droits réservés</p>
       </footer>
     </>
   )
