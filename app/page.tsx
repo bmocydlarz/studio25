@@ -26,12 +26,10 @@ export default function Home() {
     const slots: Slot[] = []
     const blocksNeeded = Math.ceil(currentDuration / 30)
     const allTimes: string[] = []
-    
     for (let h = 9; h < 18; h++) {
       allTimes.push(`${String(h).padStart(2, '0')}:00`)
       allTimes.push(`${String(h).padStart(2, '0')}:30`)
     }
-
     allTimes.forEach((t, i) => {
       let isAvailable = (i + blocksNeeded <= allTimes.length)
       if (isAvailable) {
@@ -50,17 +48,13 @@ export default function Home() {
   useEffect(() => {
     if (!date) return
     setTime('')
-    fetch(`/api/rdv/slots/${date}`)
-      .then(res => res.json())
-      .then(data => setBookedSlots(data.booked || []))
-      .catch(console.error)
+    fetch(`/api/rdv/slots/${date}`).then(res => res.json()).then(data => setBookedSlots(data.booked || []))
   }, [date])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    // On envoie TOUTES les infos pour satisfaire les contraintes Not Null de Supabase
     const payload = {
       ...formData,
       service_id: serviceId,
@@ -78,17 +72,16 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-
       if (res.ok) {
         setSuccess(true)
         setFormData({ prenom: '', nom: '', phone: '' })
         setCategorie(null); setServiceId(''); setDate(''); setTime('');
       } else {
-        const errorData = await res.json()
-        alert(`Erreur : ${errorData.error}`)
+        const err = await res.json()
+        alert(`Erreur : ${err.error}`)
       }
     } catch (err) {
-      alert("Erreur de connexion au serveur.")
+      alert("Erreur de connexion")
     } finally {
       setLoading(false)
     }
@@ -133,9 +126,41 @@ export default function Home() {
         </div>
       </header>
 
+      <section id="instagram">
+        <div className="section-label">Portfolio</div>
+        <h2 className="section-title">Mes dernières <em>créations</em></h2>
+        <div className="insta-grid">
+            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1607779097040-26e80aa78e66?q=80&w=800" alt="Ongles" /></div>
+            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1560869713-7d0a29430803?q=80&w=800" alt="Coiffure" /></div>
+            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=800" alt="Cils" /></div>
+            <div className="insta-card glass"><img src="https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800" alt="Maquillage" /></div>
+        </div>
+      </section>
+
+      <section id="tarifs">
+        <div className="section-label">Menu</div>
+        <h2 className="section-title">Prestations & <em>Tarifs</em></h2>
+        <div className="tarifs-grid">
+          {Object.entries(PRESTATIONS_PAR_CAT).map(([cat, services]) => (
+            <div key={cat} className="tarif-category glass">
+              <h3 className="serif" style={{textTransform: 'capitalize'}}>{cat}</h3>
+              <div className="tarif-list">
+                {services.map(s => (
+                  <div key={s.id} className="tarif-item">
+                    <span className="name">{s.nom}</span>
+                    <span className="dots"></span>
+                    <span className="price">{s.prix}€</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section id="reservation">
         <div className="section-label">Agenda</div>
-        <h2 className="section-title">Prendre Rendez-vous</h2>
+        <h2 className="section-title">Prendre <em>Rendez-vous</em></h2>
         <div className="booking-wrap glass">
           <form onSubmit={handleSubmit}>
             <div className="booking-step">
@@ -196,7 +221,10 @@ export default function Home() {
         </div>
       </section>
 
-      <footer><p>Studiio.25 🤎 · Quesnoy-sur-Deûle</p></footer>
+      <footer>
+        <p>Studiio.25 🤎 · Quesnoy-sur-Deûle</p>
+        <p style={{fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.6}}>© 2026 Tous droits réservés</p>
+      </footer>
     </>
   )
 }
