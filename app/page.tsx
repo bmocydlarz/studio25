@@ -3,9 +3,19 @@
 import { useState, useEffect } from 'react'
 import { PRESTATIONS_PAR_CAT, getPrestationById, Categorie } from '@/lib/prestations'
 
+// IDs des prestations nécessitant un contact préalable
+// Adapte ces IDs selon ta lib/prestations.ts
+const CONTACT_REQUIRED_IDS = ['balayage', 'couleur'] // à adapter à tes vrais IDs
+
 interface Slot {
   time: string;
   isAvailable: boolean;
+}
+
+interface AvailabilityRule {
+  date: string;
+  type: 'day_off' | 'partial';
+  blocked_slots: string[];
 }
 
 export default function Home() {
@@ -16,11 +26,50 @@ export default function Home() {
   const [time, setTime] = useState<string>('')
   
   const [bookedSlots, setBookedSlots] = useState<string[]>([])
+  const [availabilityRules, setAvailabilityRules] = useState<Record<string, AvailabilityRule>>({})
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  
+  // Pour les prestations nécessitant contact : afficher le modal d'avertissement
+  const [showContactWarning, setShowContactWarning] = useState(false)
 
   const currentService = serviceId ? getPrestationById(serviceId) : null
   const currentDuration = currentService?.duree || 0
+  const needsContact = serviceId ? CONTACT_REQUIRED_IDS.includes(serviceId) : false
+
+  // Date max = dans 1 mois
+  const today = new Date()
+  const maxDate = new Date(today)
+  maxDate.setMonth(maxDate.getMonth() + 1)
+  const maxDateStr = maxDate.toISOString().split('T')[0]
+  const minDateStr = today.toISOString().split('T')[0]
+
+  // Fetch les règles de dispo pour le mois courant et suivant
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      const months = [
+        `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`,
+        `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}`
+      ]
+      // Dédupliquer si même mois
+      const uniqueMonths = [...new Set(months)]
+      
+      const allRules: Record<string, AvailabilityRule> = {}
+      await Promise.all(uniqueMonths.map(async (month) => {
+        try {
+          const res = await fetch(`/api/availability?month=${month}`)
+          if (res.ok) {
+            const json = await res.json()
+            ;(json.rules || []).forEach((rule: AvailabilityRule) => {
+              allRules[rule.date] = rule
+            })
+          }
+        } catch {}
+      }))
+      setAvailabilityRules(allRules)
+    }
+    fetchAvailability()
+  }, [])
 
   const generateSlots = () => {
     const slots: Slot[] = []
@@ -30,11 +79,17 @@ export default function Home() {
       allTimes.push(`${String(h).padStart(2, '0')}:00`)
       allTimes.push(`${String(h).padStart(2, '0')}:30`)
     }
+
+    // Récupère les slots bloqués par la règle de dispo du jour
+    const rule = availabilityRules[date]
+    const adminBlockedSlots = rule?.type === 'day_off' ? allTimes : (rule?.blocked_slots || [])
+
     allTimes.forEach((t, i) => {
       let isAvailable = (i + blocksNeeded <= allTimes.length)
       if (isAvailable) {
         for (let b = 0; b < blocksNeeded; b++) {
-          if (bookedSlots.includes(allTimes[i + b])) {
+          const slotToCheck = allTimes[i + b]
+          if (bookedSlots.includes(slotToCheck) || adminBlockedSlots.includes(slotToCheck)) {
             isAvailable = false
             break
           }
@@ -45,11 +100,34 @@ export default function Home() {
     return slots
   }
 
+  // Vérifie si un jour est complètement bloqué (day_off)
+  const isDayOff = (dateStr: string) => {
+    return availabilityRules[dateStr]?.type === 'day_off'
+  }
+
   useEffect(() => {
-    if (!date) return
+  if (!date) return
+  setTime('')
+  
+  // On ajoute ?t=... pour être SÛR que le navigateur demande la version à jour
+  fetch(`/api/rdv/slots/${date}?t=${new Date().getTime()}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("Créneaux occupés reçus :", data.booked); // Petit check dans ta console F12
+      setBookedSlots(data.booked || [])
+    })
+    .catch(err => console.error("Erreur récup slots:", err))
+}, [date])
+
+  // Quand on change de service, vérifier si contact requis
+  const handleServiceSelect = (id: string) => {
+    setServiceId(id)
+    setDate('')
     setTime('')
-    fetch(`/api/rdv/slots/${date}`).then(res => res.json()).then(data => setBookedSlots(data.booked || []))
-  }, [date])
+    if (CONTACT_REQUIRED_IDS.includes(id)) {
+      setShowContactWarning(true)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,7 +165,7 @@ export default function Home() {
     }
   }
 
-  const isFormValid = formData.prenom && formData.nom && formData.phone && serviceId && date && time
+  const isFormValid = formData.prenom && formData.nom && formData.phone && serviceId && date && time && !needsContact
 
   return (
     <>
@@ -97,12 +175,49 @@ export default function Home() {
         <div className="orb orb-3"></div>
       </div>
 
+      {/* Modal confirmation RDV */}
       <div className={`modal-overlay ${success ? 'active' : ''}`}>
         <div className="modal-box glass">
           <div className="modal-check">✅</div>
           <h3 className="serif">Rendez-vous confirmé !</h3>
           <p>Merci pour votre réservation. À très vite !</p>
           <button className="modal-close" onClick={() => setSuccess(false)}>Parfait, merci !</button>
+        </div>
+      </div>
+
+      {/* Modal avertissement contact (Balayage / Couleur) */}
+      <div className={`modal-overlay ${showContactWarning ? 'active' : ''}`}>
+        <div className="modal-box glass" style={{ maxWidth: '420px' }}>
+          <div className="modal-check">📞</div>
+          <h3 className="serif">Contact préalable requis</h3>
+          <p style={{ marginBottom: '12px' }}>
+            Pour le <strong>{currentService?.nom}</strong>, la durée et le matériel dépendent de ton projet.
+            Je dois d'abord en discuter avec toi avant de valider le rendez-vous.
+          </p>
+          <p style={{ marginBottom: '24px', fontSize: '0.9rem', opacity: 0.75 }}>
+            Appelle-moi pour qu'on échange sur ton projet et que je puisse vérifier si j'ai tout le matériel en stock. 
+            On fixe ensuite le créneau ensemble !
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <a
+              href="tel:0760462731"
+              className="btn-submit"
+              style={{ textAlign: 'center', textDecoration: 'none', display: 'block' }}
+              onClick={() => setShowContactWarning(false)}
+            >
+              📞 M'appeler au 07.60.46.27.31
+            </a>
+            <button
+              className="modal-close"
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}
+              onClick={() => {
+                setShowContactWarning(false)
+                setServiceId('')
+              }}
+            >
+              Annuler
+            </button>
+          </div>
         </div>
       </div>
 
@@ -173,8 +288,20 @@ export default function Home() {
                 </div>
                 <div className="tarif-item"><span className="name">Coupe brushing</span><span className="price">30 €</span></div>
                 <div className="tarif-item"><span className="name">Brushing</span><span className="price">20 €</span></div>
-                <div className="tarif-item"><span className="name">Balayage*</span><span className="price">dès 75 €</span></div>
-                <div className="tarif-item"><span className="name">Couleur*</span><span className="price">dès 60 €</span></div>
+                <div className="tarif-item">
+                  <span className="name">Balayage</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="price">dès 75 €</span>
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(255,160,100,0.15)', color: '#ff9955', border: '1px solid rgba(255,160,100,0.3)', borderRadius: '4px', padding: '2px 6px', whiteSpace: 'nowrap' }}>📞 Sur devis</span>
+                  </span>
+                </div>
+                <div className="tarif-item">
+                  <span className="name">Couleur</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="price">dès 60 €</span>
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(255,160,100,0.15)', color: '#ff9955', border: '1px solid rgba(255,160,100,0.3)', borderRadius: '4px', padding: '2px 6px', whiteSpace: 'nowrap' }}>📞 Sur devis</span>
+                  </span>
+                </div>
                 <div className="tarif-item" style={{marginTop:'10px'}}><span className="name">Coupe Homme</span><span className="price">18 €</span></div>
             </div>
         </div>
@@ -198,7 +325,7 @@ export default function Home() {
               <div className="step-head"><div className="step-num">2</div> L'Univers</div>
               <div className="choice-grid">
                 {(['onglerie', 'cils', 'coiffure'] as Categorie[]).map(cat => (
-                  <div key={cat} className={`choice-card ${categorie === cat ? 'selected' : ''}`} onClick={() => setCategorie(cat)}>
+                  <div key={cat} className={`choice-card ${categorie === cat ? 'selected' : ''}`} onClick={() => { setCategorie(cat); setServiceId(''); setDate(''); setTime(''); }}>
                     <div className="title" style={{textTransform: 'capitalize'}}>{cat}</div>
                   </div>
                 ))}
@@ -209,25 +336,62 @@ export default function Home() {
               <div className="booking-step">
                 <div className="step-head"><div className="step-num">3</div> La Prestation</div>
                 <div className="choice-grid">
-                  {PRESTATIONS_PAR_CAT[categorie].map(s => (
-                    <div key={s.id} className={`choice-card ${serviceId === s.id ? 'selected' : ''}`} onClick={() => { setServiceId(s.id); setDate(''); setTime(''); }}>
-                      <div className="title">{s.nom}</div>
-                      <div className="duration">⏱ {s.duree} min</div>
-                    </div>
-                  ))}
+                  {PRESTATIONS_PAR_CAT[categorie].map(s => {
+                    const requiresContact = CONTACT_REQUIRED_IDS.includes(s.id)
+                    return (
+                      <div
+                        key={s.id}
+                        className={`choice-card ${serviceId === s.id ? 'selected' : ''} ${requiresContact ? 'contact-required' : ''}`}
+                        onClick={() => handleServiceSelect(s.id)}
+                      >
+                        <div className="title">{s.nom}</div>
+                        {requiresContact ? (
+                          <div className="duration" style={{ color: '#ff9955' }}>📞 Appel requis</div>
+                        ) : (
+                          <div className="duration">⏱ {s.duree} min</div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
 
-            {serviceId && (
+            {serviceId && !needsContact && (
               <div className="booking-step">
                 <div className="step-head"><div className="step-num">4</div> Le Moment Parfait</div>
-                <input type="date" value={date} min={new Date().toISOString().split('T')[0]} onChange={e => setDate(e.target.value)} required />
-                {date && (
+                
+                <input
+                  type="date"
+                  value={date}
+                  min={minDateStr}
+                  max={maxDateStr}
+                  onChange={e => setDate(e.target.value)}
+                  required
+                />
+
+                {/* --- BLOC JOUR OFF STYLISÉ --- */}
+                {date && isDayOff(date) && (
+                  <div className="off-day-alert">
+                    <div className="off-day-icon">🗓️</div>
+                    <div className="off-day-text">
+                        <strong>Indisponible</strong>
+                        <span>Je ne suis pas disponible ce jour-là. Choisis une autre date ! 🤎</span>
+                    </div>
+                  </div>
+                )}
+
+                {date && !isDayOff(date) && (
                   <div className="slots-wrap">
                     <div className="slots-grid">
                       {generateSlots().map(slot => (
-                        <div key={slot.time} className={`slot ${!slot.isAvailable ? 'booked' : ''} ${time === slot.time ? 'selected' : ''}`} onClick={() => slot.isAvailable && setTime(slot.time)}>{slot.time}</div>
+                        <div
+                          key={slot.time}
+                          className={`slot ${!slot.isAvailable ? 'booked' : ''} ${time === slot.time ? 'selected' : ''}`}
+                          onClick={() => slot.isAvailable && setTime(slot.time)}
+                        >
+                          {slot.time}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -235,7 +399,25 @@ export default function Home() {
               </div>
             )}
 
-            <button type="submit" className={`btn-submit ${loading ? 'loading' : ''}`} disabled={!isFormValid || loading}>
+            {serviceId && needsContact && (
+              <div className="booking-step">
+                <div className="step-head"><div className="step-num">4</div> Prise de contact</div>
+                <div className="contact-call-box">
+                  <div className="call-icon">📞</div>
+                  <div className="call-text">
+                    <strong>Contact préalable obligatoire</strong>
+                    <p>Pour un <strong>{currentService?.nom}</strong>, la durée dépend de ton projet. Appelle-moi d'abord !</p>
+                  </div>
+                  <a href="tel:0760462731" className="btn-call-action">Appeler le 07.60.46.27.31</a>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className={`btn-submit ${loading ? 'loading' : ''}`}
+              disabled={!isFormValid || loading}
+            >
               <span className="btn-text">Confirmer mon rendez-vous</span>
               <span className="btn-loader">Envoi en cours…</span>
             </button>
@@ -246,6 +428,29 @@ export default function Home() {
       <footer>
         <p>Studiio.25 🤎 · Quesnoy-sur-Deûle</p>
       </footer>
+
+      {/* --- CSS POUR LES MESSAGES ET CHAMPS --- */}
+      <style jsx>{`
+        .client-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .field-group label { display: block; font-size: 0.8rem; margin-bottom: 5px; opacity: 0.7; font-weight: 600; }
+        .field-group input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); outline: none; }
+
+        .off-day-alert { 
+          display: flex; align-items: center; gap: 15px; margin-top: 20px; padding: 15px 20px; 
+          background: rgba(186, 124, 102, 0.1); border: 1px solid rgba(186, 124, 102, 0.2); 
+          border-radius: 14px; animation: fadeIn 0.3s ease; 
+        }
+        .off-day-text { display: flex; flex-direction: column; font-size: 0.9rem; color: #4a3f35; text-align: left; }
+        .off-day-text strong { color: #ba7c66; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 2px; }
+        .off-day-icon { font-size: 1.5rem; }
+
+        .contact-call-box { background: rgba(186, 124, 102, 0.08); border: 1px solid rgba(186, 124, 102, 0.3); padding: 25px; border-radius: 20px; text-align: center; }
+        .call-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .call-text strong { display: block; color: #ba7c66; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .btn-call-action { display: inline-block; background: #ba7c66; color: white; padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 15px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
     </>
   )
 }
