@@ -68,23 +68,28 @@ export default function Home() {
     e.preventDefault()
     setLoading(true)
 
-    const res = await fetch('/api/rdv', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...formData, service_id: serviceId, date, time })
-    })
+    try {
+      const res = await fetch('/api/rdv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, service_id: serviceId, date, time })
+      })
 
-    if (res.ok) {
-      setSuccess(true)
-      setFormData({ prenom: '', nom: '', phone: '' })
-      setCategorie(null)
-      setServiceId('')
-      setDate('')
-      setTime('')
-    } else {
-      alert("Erreur lors de la réservation.")
+      const result = await res.json()
+
+      if (res.ok) {
+        setSuccess(true)
+        setFormData({ prenom: '', nom: '', phone: '' })
+        setCategorie(null); setServiceId(''); setDate(''); setTime('');
+      } else {
+        // ICI : On affiche l'erreur réelle renvoyée par Supabase
+        alert(`ERREUR : ${result.error} \nDétails: ${result.details || 'Aucun'} \nIndice: ${result.hint || 'Aucun'}`)
+      }
+    } catch (err) {
+      alert("Impossible de contacter le serveur.")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const isFormValid = formData.prenom && formData.nom && formData.phone && serviceId && date && time
