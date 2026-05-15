@@ -5,18 +5,14 @@ import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { sessionOptions } from '@/lib/iron-session'
 
-// On définit la structure de la session pour TypeScript ici aussi
-interface SessionData {
-  isAdmin?: boolean;
-}
-
-// 1. RÉCUPÉRER LES RDV (Protégé par isAdmin pour l'Admin)
 export async function GET(request: NextRequest) {
-  // Vérification de la session
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions)
+  // On récupère la session
+  const session = await getIronSession(cookies(), sessionOptions)
   
-  // Si ce n'est pas l'admin, on bloque l'accès aux données privées
-  if (!session.isAdmin) {
+  // Assertion de type "any" pour contourner la restriction stricte de TS sur isAdmin
+  const isAdmin = (session as any).isAdmin;
+
+  if (!isAdmin) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
@@ -40,7 +36,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ rdvs: data || [] })
 }
 
-// 2. ENREGISTRER UN RDV (Public)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -68,7 +63,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
-    console.error("Erreur POST rdv:", err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

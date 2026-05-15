@@ -1,8 +1,13 @@
-// app/page.tsx
 "use client"
 
 import { useState, useEffect } from 'react'
 import { PRESTATIONS_PAR_CAT, getPrestationById, Categorie } from '@/lib/prestations'
+
+// Définition du type pour TypeScript pour éviter l'erreur de build
+interface Slot {
+  time: string;
+  isAvailable: boolean;
+}
 
 export default function Home() {
   const [formData, setFormData] = useState({ prenom: '', nom: '', phone: '' })
@@ -20,11 +25,10 @@ export default function Home() {
 
   // Génération des créneaux de 9h à 18h
   const generateSlots = () => {
-    const slots = []
+    const slots: Slot[] = [] // Type explicite pour le build
     const blocksNeeded = Math.ceil(currentDuration / 30)
     const allTimes: string[] = []
     
-    // On génère la liste de tous les créneaux possibles en texte
     for (let h = 9; h < 18; h++) {
       allTimes.push(`${String(h).padStart(2, '0')}:00`)
       allTimes.push(`${String(h).padStart(2, '0')}:30`)
@@ -34,10 +38,8 @@ export default function Home() {
       let isAvailable = (i + blocksNeeded <= allTimes.length)
       
       if (isAvailable) {
-        // On vérifie si l'un des blocs nécessaires est déjà dans bookedSlots
         for (let b = 0; b < blocksNeeded; b++) {
           const slotToCheck = allTimes[i + b]
-          // Comparaison stricte de texte pour éviter les bugs d'heure UTC/Locale
           if (bookedSlots.includes(slotToCheck)) {
             isAvailable = false
             break
@@ -54,11 +56,9 @@ export default function Home() {
     if (!date) return
     setTime('')
     
-    // On force la récupération des données fraîches
     fetch(`/api/rdv/slots/${date}`)
       .then(res => res.json())
       .then(data => {
-        // On s'assure que booked est bien un tableau de strings "HH:mm"
         setBookedSlots(data.booked || [])
       })
       .catch(console.error)
@@ -82,7 +82,7 @@ export default function Home() {
       setDate('')
       setTime('')
     } else {
-      alert("Erreur lors de la réservation. Le créneau n'est peut-être plus disponible.")
+      alert("Erreur lors de la réservation.")
     }
     setLoading(false)
   }
@@ -120,27 +120,26 @@ export default function Home() {
         <h1>Beauté & <em>confiance<br/>en toi</em></h1>
         <p>Coiffure, Onglerie et Regard. Un moment rien que pour soi, par une professionnelle diplômée et passionnée.</p>
         <div className="badges">
-            <div className="badge">📍 Sur place / À domicile (20 km)</div>
+            <div className="badge">📍 Quesnoy-sur-Deûle</div>
             <div className="badge">📞 07.60.46.27.31</div>
             <div className="badge">✨ Certifiée & Diplômée</div>
         </div>
       </header>
 
-      <section id="instagram" className="visible">
+      <section id="instagram">
           <div className="section-label">Portfolio</div>
           <h2 className="section-title">Mon Univers</h2>
           <p className="section-sub">Découvre mes dernières créations ✨</p>
           <div className="ig-grid">
-              <div className="ig-card"><iframe src="https://www.instagram.com/p/DHrH71SMkTm/embed" height="450" frameBorder="0" scrolling="no" allowtransparency="true"></iframe></div>
-              <div className="ig-card"><iframe src="https://www.instagram.com/p/DWhFvJ9iMpk/embed" height="450" frameBorder="0" scrolling="no" allowtransparency="true"></iframe></div>
-              <div className="ig-card"><iframe src="https://www.instagram.com/p/DUtPGm2iJPT/embed/" height="450" frameBorder="0" scrolling="no" allowtransparency="true"></iframe></div>
+              <div className="ig-card"><iframe src="https://www.instagram.com/p/DHrH71SMkTm/embed" height="450" frameBorder="0" scrolling="no"></iframe></div>
+              <div className="ig-card"><iframe src="https://www.instagram.com/p/DWhFvJ9iMpk/embed" height="450" frameBorder="0" scrolling="no"></iframe></div>
+              <div className="ig-card"><iframe src="https://www.instagram.com/p/DUtPGm2iJPT/embed/" height="450" frameBorder="0" scrolling="no"></iframe></div>
           </div>
       </section>
 
-      <section id="tarifs" className="visible">
+      <section id="tarifs">
           <div className="section-label">Prestations</div>
           <h2 className="section-title">La Carte des Soins</h2>
-          <p className="section-sub">Des prestations sur-mesure pour sublimer ton naturel 🤎</p>
           <div className="tarifs-grid">
               <div className="tarif-card glass">
                   <div className="tarif-head">
@@ -152,7 +151,6 @@ export default function Home() {
                   <div className="tarif-item"><span className="name">Gainage / Renfort</span><span className="price">30 €</span></div>
                   <div className="tarif-item"><span className="name">Gel-X</span><span className="price">40 €</span></div>
                   <div className="tarif-item"><span className="name">Capsule Gel</span><span className="price">45 €</span></div>
-                  <p className="tarif-note">Remplissage 3–4 semaines : 35 € · 5 semaines : 40 €</p>
               </div>
               
               <div className="tarif-card glass">
@@ -176,16 +174,14 @@ export default function Home() {
                   <div className="tarif-item"><span className="name">Brushing</span><span className="price">20 €</span></div>
                   <div className="tarif-item"><span className="name">Balayage*</span><span className="price">dès 75 €</span></div>
                   <div className="tarif-item"><span className="name">Couleur*</span><span className="price">dès 60 €</span></div>
-                  <div className="tarif-item"><span className="name">Coupe Homme</span><span className="price">18 €</span></div>
-                  <p className="tarif-note">*Forfaits incluant shampoing, soin & brushing</p>
+                  <div className="tarif-item" style={{marginTop:'10px'}}><span className="name">Coupe Homme</span><span className="price">18 €</span></div>
               </div>
           </div>
       </section>
 
-      <section id="reservation" className="visible">
+      <section id="reservation">
         <div className="section-label">Agenda</div>
         <h2 className="section-title">Prendre Rendez-vous</h2>
-        <p className="section-sub">Choisis ton soin, ton moment, et c'est tout — je m'occupe du reste.</p>
         
         <div className="booking-wrap glass">
           <form onSubmit={handleSubmit} noValidate>
@@ -236,17 +232,12 @@ export default function Home() {
             {serviceId && (
               <div className="booking-step">
                 <div className="step-head"><div className="step-num">4</div> Le Moment Parfait</div>
-                <input 
-                  type="date" 
-                  value={date} 
-                  min={new Date().toISOString().split('T')[0]} 
-                  onChange={e => setDate(e.target.value)} 
-                  required 
-                />
+                <div style={{ width: '100%' }}>
+                  <input type="date" value={date} min={new Date().toISOString().split('T')[0]} onChange={e => setDate(e.target.value)} required />
+                </div>
                 
                 {date && (
                   <div className="slots-wrap">
-                    <p className="slots-label">Créneaux disponibles</p>
                     <div className="slots-grid">
                       {generateSlots().map(slot => (
                         <div 
@@ -273,8 +264,7 @@ export default function Home() {
       </section>
 
       <footer>
-          <p>Studiio.25 🤎 · <a href="tel:0760462731" style={{color: 'var(--terra)', textDecoration: 'none'}}>07.60.46.27.31</a> · Quesnoy-sur-Deûle</p>
-          <p style={{marginTop: '6px', fontSize: '0.8rem', color: 'var(--text-soft)'}}>© 2026 Studiio.25 — Tous droits réservés</p>
+          <p>Studiio.25 🤎 · Quesnoy-sur-Deûle</p>
       </footer>
     </>
   )
