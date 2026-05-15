@@ -52,7 +52,7 @@ export default function Home() {
         `${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}`
       ]
       // Dédupliquer si même mois
-      const uniqueMonths = [...new Set(months)]
+      const uniqueMonths = Array.from(new Set(months))
       
       const allRules: Record<string, AvailabilityRule> = {}
       await Promise.all(uniqueMonths.map(async (month) => {
