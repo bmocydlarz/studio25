@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase' // On utilise le client standard
+import { supabase } from '@/lib/supabase'
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { sessionOptions } from '@/lib/iron-session'
 
-// RÉCUPÉRER LES RÈGLES (ACCÈS PUBLIC)
+// RÉCUPÉRER LES RÈGLES
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const month = searchParams.get('month')
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ rules: data || [] })
 }
 
-// ENREGISTRER UNE RÈGLE (ADMIN ONLY)
+// ENREGISTRER UNE RÈGLE
 export async function POST(req: NextRequest) {
   try {
     const session = await getIronSession(cookies(), sessionOptions)
@@ -53,26 +53,18 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// SUPPRIMER UNE RÈGLE (ADMIN ONLY)
+// SUPPRIMER UNE RÈGLE
 export async function DELETE(req: NextRequest) {
-  try {
-    const session = await getIronSession(cookies(), sessionOptions)
-    if (!(session as any).isAdmin) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+  const session = await getIronSession(cookies(), sessionOptions)
+  if (!(session as any).isAdmin) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
 
-    const { searchParams } = new URL(req.url)
-    const date = searchParams.get('date')
+  const { searchParams } = new URL(req.url)
+  const date = searchParams.get('date')
 
-    if (!date) return NextResponse.json({ error: "Date manquante" }, { status: 400 })
+  if (!date) return NextResponse.json({ error: "Date manquante" }, { status: 400 })
 
-    const { error } = await supabase
-      .from('availability')
-      .delete()
-      .eq('date', date)
+  const { error } = await supabase.from('availability').delete().eq('date', date)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ success: true })
-  } catch (err: any) {
-    console.error("Erreur DELETE Availability:", err.message)
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }
