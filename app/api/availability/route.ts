@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase' // Utilisé pour le GET public
-import { createClient } from '@supabase/supabase-js' // Ajouté pour créer le client Admin secret
+import { supabase } from '@/lib/supabase' // On utilise le client standard
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { sessionOptions } from '@/lib/iron-session'
 
-// Client d'administration secret (Bypass le RLS pour POST et DELETE)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Ta clé privée serveur
-)
-
-// RÉCUPÉRER LES RÈGLES (ACCÈS PUBLIC POUR LE CALENDRIER CLIENT)
+// RÉCUPÉRER LES RÈGLES (ACCÈS PUBLIC)
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const month = searchParams.get('month')
@@ -21,7 +14,6 @@ export async function GET(req: NextRequest) {
   const lastDay = new Date(year, mon, 0).getDate()
   const lastDayStr = `${month}-${String(lastDay).padStart(2, '0')}`
 
-  // On utilise le client classique 'supabase' (soumis au RLS, autorisé en lecture publique)
   const { data, error } = await supabase
     .from('availability')
     .select('*')
@@ -45,8 +37,7 @@ export async function POST(req: NextRequest) {
 
     if (!date || !type) return NextResponse.json({ error: "Données manquantes" }, { status: 400 })
 
-    // On utilise "supabaseAdmin" pour enregistrer sans blocage RLS
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('availability')
       .upsert({ 
         date, 
@@ -73,8 +64,7 @@ export async function DELETE(req: NextRequest) {
 
     if (!date) return NextResponse.json({ error: "Date manquante" }, { status: 400 })
 
-    // On utilise "supabaseAdmin" pour supprimer sans blocage RLS
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('availability')
       .delete()
       .eq('date', date)
