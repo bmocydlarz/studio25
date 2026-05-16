@@ -17,10 +17,10 @@ export const PRESTATIONS: Prestation[] = [
   { id: 'capsule',   nom: 'Capsule Gel',        duree: 120, prix: 45, categorie: 'onglerie' },
   // Cils
   { id: 'rehausse',  nom: 'Réhaussement',       duree: 60,  prix: 30, categorie: 'cils' },
-  { id: 'cilacil',   nom: 'Cils à cils',        duree: 90,  prix: 40, categorie: 'cils' },
-  { id: 'mixtel',    nom: 'Mixte léger',         duree: 105, prix: 45, categorie: 'cils' },
+  { id: 'cilacil',   nom: 'Cils à cils',        duree: 120,  prix: 40, categorie: 'cils' },
+  { id: 'mixtel',    nom: 'Mixte léger',         duree: 120, prix: 45, categorie: 'cils' },
   { id: 'mixtei',    nom: 'Mixte Intense',       duree: 120, prix: 50, categorie: 'cils' },
-  { id: 'volume',    nom: 'Volume Russe',        duree: 150, prix: 55, categorie: 'cils' },
+  { id: 'volume',    nom: 'Volume Russe',        duree: 120, prix: 55, categorie: 'cils' },
   // Coiffure
   { id: 'brushing',  nom: 'Brushing',            duree: 45,  prix: 20, categorie: 'coiffure' },
   { id: 'coupe_f',   nom: 'Coupe brushing',      duree: 60,  prix: 30, categorie: 'coiffure' },
