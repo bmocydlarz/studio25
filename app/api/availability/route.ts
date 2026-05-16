@@ -7,15 +7,18 @@ import { sessionOptions } from '@/lib/iron-session'
 // RÉCUPÉRER LES RÈGLES
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const month = searchParams.get('month') 
-
+  const month = searchParams.get('month')
   if (!month) return NextResponse.json({ error: 'Mois manquant' }, { status: 400 })
+
+  const [year, mon] = month.split('-').map(Number)
+  const lastDay = new Date(year, mon, 0).getDate()
+  const lastDayStr = `${month}-${String(lastDay).padStart(2, '0')}`
 
   const { data, error } = await supabase
     .from('availability')
     .select('*')
     .gte('date', `${month}-01`)
-    .lte('date', `${month}-31`)
+    .lte('date', lastDayStr)
 
   if (error) {
     console.error("Erreur GET Availability:", error.message)
