@@ -70,20 +70,34 @@ export default function AdminAgenda() {
   }, [currentMonday]);
 
   useEffect(() => {
-    const fetchAvailability = async () => {
-      const monthStr = `${dispMonth.year}-${String(dispMonth.month + 1).padStart(2, '0')}`
+  const fetchAvailability = async () => {
+    // Mois visibles dans l'agenda (semaine courante peut chevaucher 2 mois)
+    const monthsToFetch = new Set<string>()
+    
+    // Mois de la semaine agenda
+    for (let i = 0; i <= 6; i++) {
+      const d = new Date(currentMonday)
+      d.setDate(d.getDate() + i)
+      monthsToFetch.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+    }
+    
+    // Mois du calendrier disponibilités
+    monthsToFetch.add(`${dispMonth.year}-${String(dispMonth.month + 1).padStart(2, '0')}`)
+
+    const allRules: Record<string, AvailabilityRule> = {}
+    await Promise.all(Array.from(monthsToFetch).map(async (monthStr) => {
       try {
         const res = await fetch(`/api/availability?month=${monthStr}`)
         if (res.ok) {
           const json = await res.json()
-          const rules: Record<string, AvailabilityRule> = {}
-          ;(json.rules || []).forEach((r: AvailabilityRule) => { rules[r.date] = r })
-          setAvailRules(rules)
+          ;(json.rules || []).forEach((r: AvailabilityRule) => { allRules[r.date] = r })
         }
       } catch {}
-    }
-    fetchAvailability()
-  }, [dispMonth, view]) // Re-fetch quand on change de vue
+    }))
+    setAvailRules(allRules)
+  }
+  fetchAvailability()
+}, [dispMonth, view, currentMonday]) // ← currentMonday ajouté
 
   const changeWeek = (delta: number) => {
     const newMon = new Date(currentMonday)
