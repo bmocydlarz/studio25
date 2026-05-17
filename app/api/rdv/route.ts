@@ -33,7 +33,7 @@ async function sendTelegramNotification(rdv: any) {
     `🕒 *Heure :* ${rdv.time_start}`;
 
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    return await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 🔥 DÉCLENCHEMENT DE LA NOTIFICATION (Sans bloquer la réponse de l'utilisateur)
-    sendTelegramNotification(newRdv)
+    await sendTelegramNotification(newRdv)
 
     return NextResponse.json({ success: true, data })
   } catch (err: any) {
