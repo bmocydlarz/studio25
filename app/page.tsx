@@ -83,7 +83,7 @@ export default function Home() {
     if (dayOfWeek === 0) return []
 
     // Génération de tous les slots de la journée
-    const endHour = dayOfWeek === 6 ? 14 : 18
+    const endHour = dayOfWeek === 6 ? 14 : 19
     const allTimes: string[] = []
     for (let h = 9; h < endHour; h++) {
       allTimes.push(`${String(h).padStart(2, '0')}:00`)
