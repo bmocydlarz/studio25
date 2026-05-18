@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   // On applique le type <SessionData> ici
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions)
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
   session.isAdmin = true
   await session.save()
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 // DELETE /api/auth — déconnexion
 export async function DELETE() {
   // On applique aussi le type ici par cohérence
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions)
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
   session.destroy()
   return NextResponse.json({ ok: true })
 }

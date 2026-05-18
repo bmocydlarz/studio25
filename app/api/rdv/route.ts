@@ -49,7 +49,7 @@ async function sendTelegramNotification(rdv: any) {
 
 // ── GET : RÉCUPÉRER LES RDV D'UNE DATE (ADMIN ONLY) ──────────────────
 export async function GET(request: NextRequest) {
-  const session = await getIronSession(cookies(), sessionOptions)
+  const session = await getIronSession(await cookies(), sessionOptions)
   const isAdmin = (session as any).isAdmin
 
   if (!isAdmin) {
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 // ── DELETE : SUPPRIMER UN RENDEZ-VOUS (ADMIN ONLY) ───────────────────
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getIronSession(cookies(), sessionOptions)
+    const session = await getIronSession(await cookies(), sessionOptions)
     const isAdmin = (session as any).isAdmin
 
     if (!isAdmin) {

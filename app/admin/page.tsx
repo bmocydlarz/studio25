@@ -18,9 +18,10 @@ type AvailabilityRule = { date: string, type: 'day_off' | 'partial', blocked_slo
 type AdminView = 'agenda' | 'disponibilites'
 
 const ALL_SLOTS: string[] = []
-for (let h = 9; h < 18; h++) {
-  ALL_SLOTS.push(`${String(h).padStart(2,'0')}:00`)
-  ALL_SLOTS.push(`${String(h).padStart(2,'0')}:30`)
+for (let m = 9 * 60; m <= 18 * 60 + 30; m += 30) {
+  const h = Math.floor(m / 60)
+  const min = m % 60
+  ALL_SLOTS.push(`${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`)
 }
 
 const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']

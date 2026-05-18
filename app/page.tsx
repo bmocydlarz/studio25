@@ -83,11 +83,12 @@ export default function Home() {
     if (dayOfWeek === 0) return []
 
     // Génération de tous les slots de la journée
-    const endHour = dayOfWeek === 6 ? 14 : 19
+    const endMinutes = dayOfWeek === 6 ? 14 * 60 : 18 * 60 + 30
     const allTimes: string[] = []
-    for (let h = 9; h < endHour; h++) {
-      allTimes.push(`${String(h).padStart(2, '0')}:00`)
-      allTimes.push(`${String(h).padStart(2, '0')}:30`)
+    for (let m = 9 * 60; m < endMinutes; m += 30) {
+     const h = Math.floor(m / 60)
+     const min = m % 60
+     allTimes.push(`${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`)
     }
 
     const rule = availabilityRules[date]
@@ -355,6 +356,7 @@ export default function Home() {
                   max={maxDateStr}
                   onChange={e => setDate(e.target.value)}
                   required
+                  style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
                 />
 
                 {date && isDayOff(date) && (
@@ -433,8 +435,31 @@ export default function Home() {
         .call-icon { font-size: 2.5rem; margin-bottom: 10px; }
         .call-text strong { display: block; color: #ba7c66; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
         .btn-call-action { display: inline-block; background: #ba7c66; color: white; padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 15px; }
+        /* Force l'input date à rester propre et responsive */
+input[type="date"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none; /* Supprime des styles forcés sur iOS */
+  min-height: 45px; /* Aligne une hauteur confortable pour le clic mobile */
+}
+
+/* Optionnel : Si ta grille de slots (.slots-grid) déborde elle aussi sur mobile */
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); 
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.slots-wrap {
+  width: 100%;
+  overflow-x: hidden; /* Sécurité anti-débordement horizontal */
+}
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
       `}</style>
     </>
   )

@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 // ENREGISTRER UNE RÈGLE
 export async function POST(req: NextRequest) {
   try {
-    const session = await getIronSession(cookies(), sessionOptions)
+    const session = await getIronSession(await cookies(), sessionOptions)
     if (!(session as any).isAdmin) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
 
     const { date, type, blocked_slots } = await req.json()
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
 // SUPPRIMER UNE RÈGLE
 export async function DELETE(req: NextRequest) {
-  const session = await getIronSession(cookies(), sessionOptions)
+  const session = await getIronSession(await cookies(), sessionOptions)
   if (!(session as any).isAdmin) return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
 
   const { searchParams } = new URL(req.url)

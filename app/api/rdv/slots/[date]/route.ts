@@ -5,10 +5,10 @@ export const revalidate = 0; // Force la mise à jour à chaque appel
 
 // GET /api/rdv/slots/2026-05-20 — retourne les créneaux bloqués (fusion RDV + Disponibilités)
 export async function GET(
-  _req: NextRequest,
-  { params }: { params: { date: string } }
+  req: Request,
+  { params }: { params: Promise<{ date: string }> }
 ) {
-  const { date } = params
+  const { date } = await params
 
   // Validation du format de la date
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
