@@ -10,6 +10,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
+    "ical-generator": "^10.2.0",
     "iron-session": "^8.0.1",
     "next": "^15.5.18",
     "react": "^19.2.6",
@@ -22,6 +23,6 @@
     "typescript": "^5"
   },
   "overrides": {
-  "postcss": "^8.5.10"
+    "postcss": "^8.5.10"
   }
 }
