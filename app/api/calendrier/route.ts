@@ -2,10 +2,40 @@ import { createClient } from '@supabase/supabase-js';
 import ical, { ICalCalendarMethod } from 'ical-generator';
 import { NextResponse } from 'next/server';
 
-// Force Next.js à ne pas évaluer cette page au moment du build sur Vercel
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  // 1. VÉRIFICATION DE L'AUTHENTIFICATION (USER & MDP)
+  const authHeader = request.headers.get('authorization');
+  
+  // Tu peux changer l'identifiant "studiio25" ici si tu veux
+  const expectedUser = "studiio25"; 
+  const expectedPassword = process.env.ADMIN_PASSWORD || "TEST";
+
+  if (!authHeader) {
+    return new NextResponse('Accès refusé : Identifiants requis', {
+      status: 401,
+      headers: { 'WWW-Authenticate': 'Basic realm="Secure Calendar"' },
+    });
+  }
+
+  // Décodage des identifiants envoyés par le Calendrier
+  try {
+    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    const user = auth[0];
+    const pass = auth[1];
+
+    if (user !== expectedUser || pass !== expectedPassword) {
+      return new NextResponse('Accès refusé : Identifiants incorrects', {
+        status: 401,
+        headers: { 'WWW-Authenticate': 'Basic realm="Secure Calendar"' },
+      });
+    }
+  } catch (err) {
+    return new NextResponse('Erreur d\'authentification', { status: 401 });
+  }
+
+  // 2. CONNEXION SUPABASE (Si l'authentification est réussie)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -16,7 +46,6 @@ export async function GET() {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // 1. Récupération des rendez-vous
     const { data: appointments, error } = await supabase
       .from('reservations') 
       .select('*')
@@ -24,20 +53,17 @@ export async function GET() {
 
     if (error) throw error;
 
-    // 2. Création de l'agenda avec le fuseau horaire Europe/Paris
     const calendar = ical({
       name: 'Studiio.25 - Agenda',
       method: ICalCalendarMethod.PUBLISH,
-      timezone: 'Europe/Paris', // <-- FORCE LE FUSEAU HORAIRE ICI
+      timezone: 'Europe/Paris',
       ttl: 3600
     });
 
-    // 3. Construction des événements
     appointments?.forEach((rdv) => {
       const [year, month, day] = rdv.date.split('-').map(Number);
       const [hours, minutes] = rdv.time_start.split(':').map(Number);
 
-      // Création de la date locale
       const startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
       const endDateTime = new Date(startDateTime.getTime() + rdv.duree * 60000);
 
@@ -47,7 +73,7 @@ export async function GET() {
         id: rdv.id,
         start: startDateTime,
         end: endDateTime,
-        timezone: 'Europe/Paris', // <-- FORCE AUSSI SUR L'ÉVÉNEMENT
+        timezone: 'Europe/Paris',
         summary: `💇‍♂️ ${rdv.prenom} ${rdv.nom.toUpperCase()} - ${rdv.service_nom}`,
         description: `Prestation : ${rdv.service_nom}\nDurée : ${rdv.duree} min\nTarif : ${rdv.prix} €\nTéléphone : ${rdv.phone}\nCatégorie : ${rdv.categorie}`,
         location: 'Studiio.25',
