@@ -98,12 +98,54 @@ export default function Home() {
 
     const blocksNeeded = Math.ceil(currentDuration / 30) || 1
 
+    // --- LOGIQUE DES LIMITES DE TEMPS DE RÉSERVATION ---
+    const maintenant = new Date()
+    
+    // Date du jour (Aujourd'hui) au format 'YYYY-MM-DD'
+    const aujourdHuiStr = maintenant.toISOString().split('T')[0]
+    
+    // Date de demain au format 'YYYY-MM-DD'
+    const demain = new Date(maintenant)
+    demain.setDate(maintenant.getDate() + 1)
+    const demainStr = demain.toISOString().split('T')[0]
+
     // Fonction utilitaire : est-ce qu'un slot à l'index i est disponible ?
     const isSlotAvailable = (i: number): boolean => {
       if (i + blocksNeeded > allTimes.length) return false
+      
+      const t = allTimes[i]
+      const [slotHeure, slotMinute] = t.split(':').map(Number)
+
+      // Cas 1 : La réservation est pour AUJOURD'HUI
+      if (date === aujourdHuiStr) {
+        // Sécurité : masquer les créneaux dont l'heure est déjà passée
+        if (slotHeure < maintenant.getHours() || (slotHeure === maintenant.getHours() && slotMinute <= maintenant.getMinutes())) {
+          return false
+        }
+
+        // RÈGLE : Si le RDV demandé est à 13h00 ou après, il faut réserver avant 11h00 du matin
+        if (slotHeure >= 13) {
+          const limiteMatin = new Date(maintenant)
+          limiteMatin.setHours(12, 0, 0, 0) // Tu peux changer le 11 ici si besoin
+          if (maintenant > limiteMatin) return false
+        }
+      }
+
+      // Cas 2 : La réservation est pour DEMAIN
+      else if (date === demainStr) {
+        // RÈGLE : Si le RDV demandé est le matin (avant 12h00), il faut impérativement réserver avant 19h00 la veille
+        if (slotHeure < 12) {
+          if (maintenant.getHours() >= 19) return false
+        }
+      }
+      
+      // Cas 3 : La réservation est pour APRÈS-DEMAIN OU PLUS TARD
+      // -> Aucune règle de restriction horaire ne s'applique ici, tous les créneaux restent libres !
+
+      // Enfin, on vérifie si le créneau est déjà pris ou bloqué par l'admin
       for (let b = 0; b < blocksNeeded; b++) {
-        const t = allTimes[i + b]
-        if (bookedSlots.includes(t) || adminBlockedSlots.includes(t)) return false
+        const slotVerif = allTimes[i + b]
+        if (bookedSlots.includes(slotVerif) || adminBlockedSlots.includes(slotVerif)) return false
       }
       return true
     }
@@ -254,6 +296,7 @@ export default function Home() {
             <div className="tarif-item"><span className="name">Manucure</span><span className="price">20 €</span></div>
             <div className="tarif-item"><span className="name">Semi Permanent</span><span className="price">25 €</span></div>
             <div className="tarif-item"><span className="name">Gainage / Renfort</span><span className="price">30 €</span></div>
+            <div className="tarif-item"><span className="name">Remplissage 4 semaines</span><span className="price">35 €</span></div>
             <div className="tarif-item"><span className="name">Gel-X</span><span className="price">40 €</span></div>
             <div className="tarif-item"><span className="name">Capsule Gel</span><span className="price">45 €</span></div>
           </div>
@@ -275,15 +318,9 @@ export default function Home() {
               <div className="tarif-icon">✂️</div>
               <h3>Coiffure</h3>
             </div>
-            <div className="tarif-item"><span className="name">Coupe brushing</span><span className="price">30 €</span></div>
+            <div className="tarif-item" style={{ marginTop: '10px' }}><span className="name">Coupe Homme</span><span className="price">18 €</span></div>
             <div className="tarif-item"><span className="name">Brushing</span><span className="price">20 €</span></div>
-            <div className="tarif-item">
-              <span className="name">Balayage</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="price">dès 75 €</span>
-                <span style={{ fontSize: '0.65rem', background: 'rgba(255,160,100,0.15)', color: '#ff9955', border: '1px solid rgba(255,160,100,0.3)', borderRadius: '4px', padding: '2px 6px', whiteSpace: 'nowrap' }}>📞 Sur devis</span>
-              </span>
-            </div>
+            <div className="tarif-item"><span className="name">Coupe brushing</span><span className="price">30 €</span></div>
             <div className="tarif-item">
               <span className="name">Couleur</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -291,7 +328,14 @@ export default function Home() {
                 <span style={{ fontSize: '0.65rem', background: 'rgba(255,160,100,0.15)', color: '#ff9955', border: '1px solid rgba(255,160,100,0.3)', borderRadius: '4px', padding: '2px 6px', whiteSpace: 'nowrap' }}>📞 Sur devis</span>
               </span>
             </div>
-            <div className="tarif-item" style={{ marginTop: '10px' }}><span className="name">Coupe Homme</span><span className="price">18 €</span></div>
+            <div className="tarif-item">
+              <span className="name">Balayage</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="price">dès 75 €</span>
+                <span style={{ fontSize: '0.65rem', background: 'rgba(255,160,100,0.15)', color: '#ff9955', border: '1px solid rgba(255,160,100,0.3)', borderRadius: '4px', padding: '2px 6px', whiteSpace: 'nowrap' }}>📞 Sur devis</span>
+              </span>
+            </div>
+            
           </div>
         </div>
       </section>

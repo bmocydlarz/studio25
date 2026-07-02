@@ -236,9 +236,20 @@ section {
 
 .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .choice-card {
-    border: 1.5px solid var(--border); border-radius: var(--radius);
-    padding: 1.4rem 1.2rem; cursor: pointer;
-    background: rgba(255,255,255,0.6); text-align: center;
+    border: 1.5px solid var(--border); 
+    border-radius: var(--radius);
+    padding: 1.4rem 1.2rem; 
+    cursor: pointer;
+    background: rgba(255,255,255,0.6); 
+    
+    /* CORRECTION CENTRAGE : On force le centrage parfait du texte */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 90px; /* Aligne toutes les cartes à la même hauteur minimale */
+    
     transition: all 0.25s ease;
 }
 .choice-card:hover { border-color: var(--terra); background: rgba(255,255,255,0.9); transform: translateY(-2px); }

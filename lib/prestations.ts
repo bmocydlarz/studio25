@@ -13,6 +13,7 @@ export const PRESTATIONS: Prestation[] = [
   { id: 'manucure',  nom: 'Manucure',          duree: 45,  prix: 20, categorie: 'onglerie' },
   { id: 'semi',      nom: 'Semi Permanent',     duree: 60,  prix: 25, categorie: 'onglerie' },
   { id: 'gainage',   nom: 'Gainage / Renfort',  duree: 75,  prix: 30, categorie: 'onglerie' },
+  { id: 'remplissage',   nom: 'Remplissage 4 semaines',  duree: 90,  prix: 35, categorie: 'onglerie' },
   { id: 'gelx',      nom: 'Gel-X',              duree: 105, prix: 40, categorie: 'onglerie' },
   { id: 'capsule',   nom: 'Capsule Gel',        duree: 120, prix: 45, categorie: 'onglerie' },
   // Cils
