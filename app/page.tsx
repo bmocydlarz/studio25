@@ -17,7 +17,7 @@ interface AvailabilityRule {
 }
 
 export default function Home() {
-  const [formData, setFormData] = useState({ prenom: '', nom: '', phone: '' })
+  const [formData, setFormData] = useState({ prenom: '', nom: '', phone: '', email: '' })
   const [categorie, setCategorie] = useState<Categorie | null>(null)
   const [serviceId, setServiceId] = useState<string>('')
   const [date, setDate] = useState<string>('')
@@ -188,7 +188,7 @@ export default function Home() {
       })
       if (res.ok) {
         setSuccess(true)
-        setFormData({ prenom: '', nom: '', phone: '' })
+        setFormData({ prenom: '', nom: '', phone: '', email: '' })
         setCategorie(null); setServiceId(''); setDate(''); setTime('')
       } else {
         const err = await res.json()
@@ -201,7 +201,7 @@ export default function Home() {
     }
   }
 
-  const isFormValid = formData.prenom && formData.nom && formData.phone && serviceId && date && time && !needsContact
+  const isFormValid = formData.prenom && formData.nom && formData.phone && formData.email && serviceId && date && time && !needsContact
 
   return (
     <>
@@ -351,6 +351,7 @@ export default function Home() {
                 <div className="field-group"><label>Prénom</label><input type="text" value={formData.prenom} onChange={e => setFormData({ ...formData, prenom: e.target.value })} required /></div>
                 <div className="field-group"><label>Nom</label><input type="text" value={formData.nom} onChange={e => setFormData({ ...formData, nom: e.target.value })} required /></div>
                 <div className="field-group" style={{ gridColumn: '1 / -1' }}><label>Téléphone</label><input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} required /></div>
+                <div className="field-group" style={{ gridColumn: '1 / -1' }}><label>Adresse E-mail</label><input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} required /></div>
               </div>
             </div>
 

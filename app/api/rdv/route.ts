@@ -3,8 +3,69 @@ import { supabase } from '@/lib/supabase'
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { sessionOptions } from '@/lib/iron-session'
+import { Resend } from 'resend'
 
-// Fonction interne pour envoyer la notification Telegram
+// Initialisation de Resend avec ta clé secrète (.env.local)
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+// ── FONCTION INTERNE : ENVOYER LE MAIL DE VALIDATION À LA CLIENTE ────
+async function sendEmailNotification(rdv: any) {
+  if (!process.env.RESEND_API_KEY) {
+    console.error("Variable RESEND_API_KEY manquante dans l'environnement.")
+    return
+  }
+
+  if (!rdv.email) {
+    console.error("Impossible d'envoyer le mail : aucune adresse e-mail fournie par la cliente.")
+    return
+  }
+
+  // Formatage de la date en français (ex: mercredi 20 mai 2026)
+  const dateFormatee = new Date(rdv.date).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+
+  try {
+    await resend.emails.send({
+      from: 'Studiio.25 <onboarding@resend.dev>', // Tu pourras remplacer par ton propre domaine plus tard sur Resend
+      to: rdv.email,
+      subject: `🤎 Confirmation de ton rendez-vous - Studiio.25`,
+      html: `
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #4a3f35; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #f0e6e1; border-radius: 16px; background-color: #fdfbfb;">
+          <h2 style="color: #ba7c66; margin-top: 0; font-weight: normal; border-bottom: 1px solid #f0e6e1; padding-bottom: 15px; font-family: serif;">Coucou ${rdv.prenom} ! ✨</h2>
+          
+          <p style="font-size: 16px; line-height: 1.5;">Ton rendez-vous est bien confirmé ! J'ai hâte de te recevoir pour chouchouter ton naturel.</p>
+          
+          <div style="background-color: #f7f1ed; padding: 20px; border-radius: 12px; margin: 25px 0;">
+            <h3 style="margin-top: 0; color: #ba7c66; font-size: 16px;">Récapitulatif de ton moment 🤎</h3>
+            <p style="margin: 8px 0;"><strong>Soin :</strong> ${rdv.service_nom}</p>
+            <p style="margin: 8px 0;"><strong>Date :</strong> le ${dateFormatee}</p>
+            <p style="margin: 8px 0;"><strong>Heure :</strong> à ${rdv.time_start}</p>
+            <p style="margin: 8px 0;"><strong>Durée :</strong> ~ ${rdv.duree} min</p>
+            <p style="margin: 8px 0; font-weight: bold;"><strong>Tarif :</strong> ${rdv.prix} €</p>
+          </div>
+
+          <p style="font-size: 14px; line-height: 1.5; opacity: 0.9;">
+            📍 <strong>Adresse :</strong> Le salon est situé à Quesnoy-sur-Deûle.<br/>
+            📞 <strong>Un contretemps ?</strong> En cas d'annulation ou de modification, merci de me prévenir au moins 24h à l'avance au 07.60.46.27.31.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #f0e6e1; margin: 30px 0;" />
+          
+          <p style="text-align: center; font-size: 16px; margin-bottom: 5px; font-family: serif; font-style: italic;">À très vite, prends soin de toi !</p>
+          <p style="text-align: center; font-weight: bold; color: #ba7c66; margin-top: 0;">Studiio.25 🤎</p>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error("Échec de l'envoi de l'e-mail à la cliente :", err)
+  }
+}
+
+// ── FONCTION INTERNE : ENVOYER LA NOTIFICATION TELEGRAM (ADMIN) ──────
 async function sendTelegramNotification(rdv: any) {
   const token = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
@@ -14,17 +75,16 @@ async function sendTelegramNotification(rdv: any) {
     return
   }
 
-  // Formatage propre de la date en français (ex: 20 mai 2026)
   const dateFormatee = new Date(rdv.date).toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long'
   })
 
-  // Contenu du message reçu sur ton téléphone
   const message = `✨ *Nouveau Rendez-vous !* ✨\n\n` +
     `👤 *Client :* ${rdv.prenom} ${rdv.nom.toUpperCase()}\n` +
     `📞 *Téléphone :* ${rdv.phone}\n` +
+    `📧 *Email :* ${rdv.email || 'Non fourni'}\n` +
     `✂️ *Prestation :* ${rdv.service_nom}\n` +
     `📂 *Catégorie :* ${rdv.categorie}\n` +
     `⏱️ *Durée :* ${rdv.duree} min\n` +
@@ -39,11 +99,11 @@ async function sendTelegramNotification(rdv: any) {
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: 'Markdown' // Permet d'avoir le texte en gras/italique
+        parse_mode: 'Markdown'
       })
     })
   } catch (err) {
-    console.error("Échec de l'envoi de la notification Telegram:", err)
+    console.error("Échec de l'envoi de la notification Telegram :", err)
   }
 }
 
@@ -75,12 +135,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { prenom, nom, phone, service_id, date, time, service_nom, categorie, prix, duree } = body
+    const { prenom, nom, phone, email, service_id, date, time, service_nom, categorie, prix, duree } = body
 
     const newRdv = {
       prenom,
       nom,
       phone,
+      email, // Stocké en base de données pour le suivi
       service_id,
       date,
       time_start: time,
@@ -103,8 +164,11 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // 🔥 DÉCLENCHEMENT DE LA NOTIFICATION (Sans bloquer la réponse de l'utilisateur)
-    await sendTelegramNotification(newRdv)
+    // 🔥 Déclenchement des notifications en arrière-plan sans ralentir la réponse du client
+    await Promise.all([
+      sendTelegramNotification(newRdv),
+      sendEmailNotification(newRdv)
+    ])
 
     return NextResponse.json({ success: true, data })
   } catch (err: any) {
