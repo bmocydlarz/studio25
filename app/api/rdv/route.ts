@@ -32,15 +32,15 @@ async function sendEmailNotification(rdv: any) {
     await resend.emails.send({
       from: 'Studiio.25 <onboarding@resend.dev>', // Tu pourras remplacer par ton propre domaine plus tard sur Resend
       to: rdv.email,
-      subject: `🤎 Confirmation de ton rendez-vous - Studiio.25`,
+      subject: `Confirmation de ton rendez-vous - Studiio.25`,
       html: `
         <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #4a3f35; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #f0e6e1; border-radius: 16px; background-color: #fdfbfb;">
           <h2 style="color: #ba7c66; margin-top: 0; font-weight: normal; border-bottom: 1px solid #f0e6e1; padding-bottom: 15px; font-family: serif;">Coucou ${rdv.prenom} ! ✨</h2>
           
-          <p style="font-size: 16px; line-height: 1.5;">Ton rendez-vous est bien confirmé ! J'ai hâte de te recevoir pour chouchouter ton naturel.</p>
+          <p style="font-size: 16px; line-height: 1.5;">Ton rendez-vous est bien confirmé !</p>
           
           <div style="background-color: #f7f1ed; padding: 20px; border-radius: 12px; margin: 25px 0;">
-            <h3 style="margin-top: 0; color: #ba7c66; font-size: 16px;">Récapitulatif de ton moment 🤎</h3>
+            <h3 style="margin-top: 0; color: #ba7c66; font-size: 16px;">Récapitulatif de ta réservation</h3>
             <p style="margin: 8px 0;"><strong>Soin :</strong> ${rdv.service_nom}</p>
             <p style="margin: 8px 0;"><strong>Date :</strong> le ${dateFormatee}</p>
             <p style="margin: 8px 0;"><strong>Heure :</strong> à ${rdv.time_start}</p>
